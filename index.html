@@ -1,0 +1,65 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.min.css">
+        <link rel="stylesheet" href="css/style.css">
+        <link rel="stylesheet" href="css/all.min.css">
+        <script src="js/script.js" defer></script>
+        <script src="js/p5.min.js" defer></script>
+        <script src="js/jsmediatags.min.js" defer></script>
+    </head>
+    <body>
+        <title>Audio player</title>
+        <!-- Loader div -->
+        <article class="loader_container">
+            <div class="lds-facebook"><div></div><div></div><div></div></div>
+        </article>
+        <!-- Main application -->
+        <main id="content">
+            <!-- File drop in -->
+            <input type="file" id="thefile" accept="audio/*">
+            <!-- Visualizer -->
+            <canvas id="canvas"></canvas>
+
+            <!-- Player -->
+            <section id="player">
+                <!-- Player Seeker -->
+                <!-- Values are rounded to assist with click based script to seek -->
+                <progress class="player_current progress_not_seeking" value="0" min="0" max="100"></progress>
+                <img class="cover" src="imgs/default.png">
+                <!-- Current song information -->
+                <div class="artist">
+                    <ul>
+                        <li><a><h1 class="player_title">Title</h1></a></li>
+                        <li><a><h2 class="player_artist">artist</h2></a></li>
+                        <li><h4 class="player_genre">genre</h4></li>
+                    </ul>
+                </div>
+                <!-- Volume slider -->
+                <div class="volume">
+                    <a class="icon"><i class="fas fa-volume-up"></i></a>
+                    <input type="range" value="50" max="100" min="0" class="volume slider">
+                </div>
+                <!-- Play pause button -->
+                <div class="player_pause">
+                    <a class="player_icon circle"><i class="fas fa-play"></i></a>
+                </div>
+            </section>
+            <!-- Audio section (this is hidden by the other player) -->
+            <!-- Would be nice to be able to apply css to this thing -->
+            <audio id="audio" controls></audio>
+            <!-- Prompt for the input tag (once a user drags something over) -->
+            <div class="drop_content">
+                <h1>Drop your sick beats here</h1>
+                <div class="background"></div>
+            </div>
+            <!-- Timer -->
+            <section>
+                <time class="duration"></time>
+            </section>
+            <!-- Album cover background image -->
+            <div class="background_img_container">
+                <img class="background_image">
+            </div>
+        </main>
+    </body>
+</html>
