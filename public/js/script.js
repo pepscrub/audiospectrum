@@ -9,6 +9,7 @@ const file = document.getElementById("thefile"),
       title_node = document.querySelector('.player_title'),
       genre_node = document.querySelector('.player_genre'),
       artist_node = document.querySelector('.player_artist'),
+      duration_node = document.querySelector('.duration'),
       volume_slider = document.querySelector('.slider');
 let connect = false,    // If the canvas is already connected
     muted = false,      // If the user toggles mute
@@ -105,8 +106,7 @@ function file_change(file_update){
   }
       
 
-  let duration = 100, // Default duration
-      duration_node = document.querySelector('.duration')
+  let duration = 100; // Default duration
   audio.addEventListener('loadedmetadata', (e)=>{ // Once the audio file loads metadata
     duration = parseInt(audio.duration); // Loading duration (using parse int because it automagically rounds down)
     range_node.setAttribute('max', duration) // Modifying progress bar max to the duration of the song
@@ -325,7 +325,7 @@ function fade(node, type, data, amount){
   }
 }
 
-function spotify_connected(){
+function spotify_connected(calling){
   const search_parameters = new URLSearchParams(window.location.search),          // Creating object based of URL search parameters
         access_token = search_parameters.get('access_token'),                     // Grabbing access from URL
         refresh_token = search_parameters.get('refresh_token');                   // Grabbing refresh from URL
@@ -336,53 +336,171 @@ function spotify_connected(){
   // If theres no data to even retrive and the user has not interacted with the login uri
   if(access_token === null && refresh_token == null && localStorage.getItem('spotify_atoken') === null && localStorage.getItem('spotify_rtoken') === null) return false
   window.history.pushState(null, null, `${location.origin}${location.pathname}`)  // Resetting URL to make it look cleaner (this doesn't refresh the page)
-  return spotify_player();
+  return spotify_player(calling);
 }
-
-async function spotify_player(){
+// Required async await files due to response times from the spotify API
+async function spotify_player(userinforequired){
   const access_token = localStorage.getItem('spotify_atoken');
   let player_data = []
+  // So we dont call for user data past the inital message
+  if(!userinforequired){
+    await fetch('https://api.spotify.com/v1/me', {headers:{'Authorization': 'Bearer '+access_token}})
+    .then((res)=>{
+      if(res.status === 200) return res.json();             // Returning the queried data
+    })
+    .then((res)=>{
+      player_data.push({'user_info': res['product']})      // Pushing data relating to the users premium or not
+    })
+  }
+  // Getting the currently playing
+  player_data.push({'player_curr': await spotify_current()})
+  return player_data;                                     // return this data
+}
+async function spotify_current(){
+  const access_token = localStorage.getItem('spotify_atoken');
+  let data = await {};
+  // Getting the currently playing
   await fetch('https://api.spotify.com/v1/me/player/currently-playing', {headers:{'Authorization': 'Bearer '+access_token}})
   .then((res)=>{
     if(res.status === 200) return res.json();             // Returning the queried data
     if(res.status === 204) return {'state': 'inactive'}   // If spotify isn't opened and there's no track to get data from
   })
   .then((res)=>{
-    player_data.push({'player_curr': res})                // Place data into an array
+    data = res;
   })
-  await fetch('https://api.spotify.com/v1/me/player', {headers:{'Authorization': 'Bearer '+access_token}})
-  .then((res)=>{
-    if(res.status === 200) return res.json();             // Returning the queried data
-  })
-  .then((res)=>{
-    player_data.push({'player_info': res})                // Place the data into the array as well
-  })
-  return player_data;                                     // return this data
+  return data
 }
-
 async function spotify(){
-  const access_token = localStorage.getItem('spotify_atoken');
-  let required_info = await spotify_connected();  // Grabbing current player information
-  if(!required_info) return;                      // Returning if there's no login information to retrive
-  let current = required_info[1]['player_curr'],
-      player_info = required_info[2]['player_info'];
-  console.log(required_info)
-  file.remove();                                  // Removing input file to stop file uploads *TEMP
-  // Play/Pause functionality only works on premium ????????????????????????
-  // spotify will send 403 errors if the account is not premium
+  const access_token = localStorage.getItem('spotify_atoken'),
+        options = {method: 'PUT',headers:{'Authorization': 'Bearer '+access_token}};
+  let required_info = await spotify_connected(false);       // Grabbing current player information
+  if(!required_info) return;                                // Returning if there's no login information to retrive
+  let user_info = required_info[0]['user_info']             // Defining userinfo for product information
+      current = required_info[1]['player_curr'];            // Grabbing current info for error debugging
+  if(!required_info[1]['state']) return;                    // Exit function if the user stops spotify all together
+  spotify_data(await spotify_connected(true))               // Sending data to our DOM maniuplator
+  // Setting up entry point for retriving data
+  // Setting a loop to a timer to retrive data from the spotify API
+  setInterval(async ()=>{
+    const required_info = await spotify_connected(true);    // Grabbing current player information
+    spotify_data(required_info)
+  }, 3000)
+  file.remove();                                            // Removing input file to stop file uploads *TEMP
+
+  // Removing items based of the users level (cannot use pause/play functionality if the user is not a premium user)
+  if(user_info !== 'premium'){
+    let volume_node = document.querySelector('.volume')
+    volume_node.style.opacity = 0
+    pause_node.style.opacity = 0;
+    setTimeout(()=>{
+      pause_node.remove();
+      volume_node.remove();
+    }, 125);
+  }
+
+  const change_volume = (percent) =>{
+    fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${percent}`, options)
+  },
+  volume_icon_change = () =>{
+    let volume = volume_slider.value / 100 // Division required since audio.volume takes a int between 0 and 1
+    change_volume(volume_slider.value)
+    // Storing current volume into storage
+    localStorage.setItem('volume', volume)
+    // Making the icon change based on audio level
+    // 0 is muted
+    // 0-59 is a speaker with 2 wave things
+    // 60-100 is a speaker icon with all those wave things
+    if(volume_slider.value > 0 || volume_slider.value < 60){ 
+      volume_icon.innerHTML = '<i class="fas fa-volume-down"></i>'
+    }
+    if(volume_slider.value == 0){
+      volume_icon.innerHTML = '<i class="fas fa-volume-mute"></i>'
+    }
+    if(volume_slider.value >= 60){
+      volume_icon.innerHTML = '<i class="fas fa-volume-up"></i>'
+    }
+  }
+
+
+  volume_icon.addEventListener('click',()=>{
+    if(!muted){ // Not muted
+      muted = true; 
+      change_volume(0)
+      volume_icon.innerHTML = '<i class="fas fa-volume-mute"></i>'
+    }else{
+      muted = false;
+      // Grabbing volume from localstorage if the item exists (basically the same as the slider)
+      change_volume(localStorage.getItem('volume') != undefined ? localStorage.getItem('volume') : 1)
+      volume_icon.innerHTML = '<i class="fas fa-volume-up"></i>'
+    }
+  })
+
+  // Adding events to volume slider
+  // We can assume that the mouse movements on the slider are changes to volume (doesn't really effect the user end anyways)
+  volume_slider.addEventListener('mousemove', ()=>{
+    volume_icon_change()
+  })
+  // Adding an event listener once the DOM node changes e.g. if the user just clicks to a new volume
+  volume_slider.addEventListener('change', ()=>{
+    volume_icon_change()
+  })
+
+
+  document.querySelector('.slider').value = localStorage.getItem('volume') != undefined ? localStorage.getItem('volume') * 100 : .5 // Volume resetting
+
   pause_node.addEventListener('click', (event)=>{
     if(pause){
-      fetch(`https://api.spotify.com/v1/me/player/play`, {method: 'PUT',headers:{'Authorization': 'Bearer '+access_token}})
+      fetch(`https://api.spotify.com/v1/me/player/play`, options)
       pause = false;
       pause_node.innerHTML = `<i class="fas fa-play"></i>`
     }else{
-      fetch(`https://api.spotify.com/v1/me/player/pause`, {method: 'PUT',headers:{'Authorization': 'Bearer '+access_token}})
+      fetch(`https://api.spotify.com/v1/me/player/pause`, options)
       pause = true;
       pause_node.innerHTML = `<i class="fas fa-pause"></i>`
     }
   })
 }
 
+
+function spotify_data(data){
+  const player_curr_items = data[0]['player_curr']['item'],
+        song_link = player_curr_items['external_urls']['spotify'],
+        player_duration = player_curr_items['duration_ms']
+        player_curr_img = player_curr_items['album']['images'][0] == undefined ? 'imgs/default.png' : player_curr_items['album']['images'][0]['url'], // 640px image
+        player_curr_artist = player_curr_items['artists'],
+        player_name = player_curr_items['name'];
+  let artists = '',
+      player_curr_time = data[0]['player_curr']['progress_ms'],
+      count = 1,
+      current_time = `${(`${Math.round((player_curr_time / 60500) * 100) / 100}`).replace('.', ':')}`,
+      duration_time = `${(`${Math.round((player_duration / 60500) * 100) / 100}`).replace('.', ':')}`;
+  player_curr_artist.forEach((artist)=>{
+    let url = artist.external_urls.spotify,
+        name = artist.name,
+        node = `<a href="${url}">${name}</a>`
+    if(player_curr_artist.length == count){
+      artists += ' '+node
+    }else{
+      artists += `${node},`
+    }
+    count+=1;
+  })
+
+  // Modifying DOM
+
+  current_time = `${(`${Math.round(((player_curr_time) / 60500) * 100) / 100}`).replace('.', ':')}`;
+  duration_time = duration_time.length == 4 ? duration_ntime : duration_time + '0';
+  current_time = current_time.length == 4 ? current_time : current_time + '0';
+  duration_node.textContent = `${current_time} / ${duration_time}`
+  genre_node.textContent = ''
+  title_node.innerHTML = `<a href="${song_link}">${player_name}</a>`;
+  artist_node.innerHTML = artists;
+  range_node.classList.remove('progress_not_seeking');
+  range_node.classList.add('progress_spotify')
+  range_node.value = player_curr_time;
+  range_node.max = player_duration;
+  album_cover.src = player_curr_img
+}
 
 function read_file(file_url, clean_name){
         jsmediatags = window.jsmediatags;

@@ -129,7 +129,7 @@ li{
 .player_title, .player_artist{
   transition: color 100ms linear, opacity 150ms ease;
 }
-a[href] > h1:hover, a[href] > h2:hover{
+a[href] > h1:hover, a[href] > h2:hover, a[href]:hover{
   cursor: pointer;
   color: #b9bcce;
 }
@@ -165,6 +165,9 @@ a[href] > h1:hover, a[href] > h2:hover{
 .progress_not_seeking::-webkit-progress-value{
   transition: width 1s linear;
 }
+.progress_spotify::-webkit-progress-value{
+  transition: width 3s linear;
+}
 
 .player_current::-webkit-progress-bar{
   background-color: #06080a;
@@ -172,6 +175,7 @@ a[href] > h1:hover, a[href] > h2:hover{
 
 
 .volume{
+  transition: opacity 125ms ease;
   position: fixed;
   display: flex;
   bottom: 4.5em;
@@ -282,7 +286,7 @@ input[type=range]:hover::-ms-thumb {
 }
 
 .player_pause{
-  transition: padding 125ms cubic-bezier(1, 1.43, 0, 0.88), border 125ms cubic-bezier(1, 1.43, 0, 0.88), bottom 125ms cubic-bezier(1, 1.43, 0, 0.88), left 125ms cubic-bezier(1, 1.43, 0, 0.88);
+  transition: padding 125ms cubic-bezier(1, 1.43, 0, 0.88), border 125ms cubic-bezier(1, 1.43, 0, 0.88), bottom 125ms cubic-bezier(1, 1.43, 0, 0.88), left 125ms cubic-bezier(1, 1.43, 0, 0.88), opacity 125ms ease;
   cursor: pointer;
   position: fixed;
   left: 49%;

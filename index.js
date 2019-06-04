@@ -34,7 +34,8 @@ const   express = require('express'),           // HTTP server module
         // ▪ Pause/Play track
         // ▪ Seek to position
         // ▪ Set volume
-        scope = 'user-read-playback-state user-modify-playback-state'
+        // We also need to access the users details to see if the user in question is premium or not (user-read-private)
+        scope = 'user-read-playback-state user-modify-playback-state user-read-private'
         state_key = 'spotify_auth_state';
 // Middleware
 app.use(express.static(__dirname+'/public')).use(cookieParser());       // Serves all the files in the current directory (Cookie parser lets us initate a session on all the pages we're serving)
