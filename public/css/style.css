@@ -25,7 +25,7 @@ a{
   color: inherit;
 }
 a{
-  cursor: pointer;
+  cursor: context-menu;
 }
 
 #thefile {
@@ -86,6 +86,7 @@ audio {
 
 .cover{
   transition: opacity 125ms linear;
+  user-select: none;
   height: 100%;
   width: auto;
 }
@@ -103,25 +104,32 @@ audio {
 ul{
   padding-left: .5em;
 }
-
+.artist{
+  width: 75%;
+}
+li{
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .player_artist, .player_genre, .player_title{
   transition: opacity 150ms ease;
+  user-select: none;
 }
 
 .player_title{
-  cursor: pointer;
   padding-top: .25em;
   font-size: 175%;
 }
 .player_title, .player_artist{
   transition: color 100ms linear, opacity 150ms ease;
 }
-.player_title:hover, .player_artist:hover{
+a[href] > h1:hover, a[href] > h2:hover{
+  cursor: pointer;
   color: #b9bcce;
 }
 
 .player_artist{
-  cursor: pointer;
   padding-top: .25em;
   font-size: 100%;
 }
@@ -289,7 +297,7 @@ input[type=range]:hover::-ms-thumb {
 
 .loader_container{
   transition: opacity 250ms ease;
-  z-index: 999;
+  z-index: 9999999;
   position: absolute;
   top: 0;
   left: 0;
@@ -323,6 +331,7 @@ input[type=range]:hover::-ms-thumb {
 }
 
 .duration{
+  user-select: none;
   position: fixed;
   bottom: 8em;
   right: 1em;

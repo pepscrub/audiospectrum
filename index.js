@@ -14,30 +14,34 @@ app.use(bodyParser.urlencoded({ extended: true })); // Allow for headers with Co
 app.post('/api', (req, res)=>{  // Create entry point for /api for POSTS
     
     try{
-        const form = new multiparty.Form()                          // Creating form object
-        form.parse(req, (err, fields, files)=>{                     // Parsing through POST content
+        const form = new multiparty.Form()                                              // Creating form object
+        form.parse(req, (err, fields, files)=>{                                         // Parsing through POST content
             if(err) return error(color.red.bold(`[Error] `)+ err)
-            save_file(files['file'][0])                             // Grabbing first file (only expected singular file input)
+            // If the submitted file type does not contain audio in headers
+            const file_type = files['file'][0]['headers']['content-type'];              // Grabbing what file type the headers sent out
+            if(!/audio/g.test(file_type)){                                              // Looking at headers to see if the content type contains audio
+                res.status(500).send({500: 'invalid file type'});
+                error(color.red.bold(`[Error] `)+ `Invalid content type! ${file_type}`);
+                return;                                                                 // Exiting function to not call other status code
+            }
+            res.status(200).send({200: 'ok!'})                                          // Send status code (our fetch code requires this)
+            save_file(files['file'][0])                                                 // Grabbing first file (only expected singular file input)
         })
-        res.status(200).send({200: 'ok!'})                          // Send status code (our fetch code requires this)
-    }catch(exception){                                              // Catching any 500 errors that occur
-        res.status(500).send({500: exception});                     // Telling client that a server error occured
+    }catch(exception){                                                                  // Catching any 500 errors that occur
+        res.status(500).send({500: exception});                                         // Telling client that a server error occured
         error(color.red.bold(`[Error] `) + `Server error occured while parsing: ${file}`)
     }
 })
 
 save_file = (file_data) =>{
-    const   file_type = file_data['headers']['content-type'],   // Grabbing what file type the headers sent out
-            file_temp = file_data['path'],                      // Grabbing the temp location of the file sent to our server
-            file_name = file_data['originalFilename'];          // Grabbing the original file name that was uploaded
-    // If the submitted file type does not contain audio in headers
-    if(file_type !== 'audio/mp3') return error(color.red.bold(`[Error] `)+ `Invalid content type! ${file_type}`);
+    const   file_temp = file_data['path'],                                         // Grabbing the temp location of the file sent to our server
+            file_name = file_data['originalFilename'].replace(/\#/g, '');          // Grabbing the original file name that was uploaded
     try{
         // Creating function to which access later
-        const write_file = (data) =>{                               // Data retrived via readfile
-            const file_path = `public/music/${file_name}`;          // Defining file path location
-            if(!fs.existsSync(file_path)){                          // Checking to see if the file doesn't exist
-                fs.writeFile(file_path, data, (err)=>{              // Creating the file using data retrived via read file
+        const write_file = (data) =>{                                               // Data retrived via readfile
+            const file_path = `public/music/${file_name}`;                          // Defining file path location
+            if(!fs.existsSync(file_path)){                                          // Checking to see if the file doesn't exist
+                fs.writeFile(file_path, data, (err)=>{                              // Creating the file using data retrived via read file
                     if(err) error(color.red.bold(`[Error] `) + err)
                 })
             }

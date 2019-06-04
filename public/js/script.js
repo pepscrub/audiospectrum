@@ -36,7 +36,7 @@ window.onload = () => {
         mouse_down = false, // Mouse down event
         pause = true;       // If the audio is paused
     loader_node.style.opacity = '0'; // Fading out loader
-    setTimeout(()=>{loader_node.remove();}, 250) // Removing loader after fade out
+    setTimeout(()=>{loader_node.remove()},125)
     // Play/Pause button
     pause_node.innerHTML = `<i class="fas fa-pause"></i>`
     pause_node.addEventListener('click', (e)=>{
@@ -71,10 +71,12 @@ window.onload = () => {
       setTimeout(()=>{range_node.classList.add('progress_not_seeking')},125) // Making the progress bar snap back to the start
       console.log(this.files)
       let files = this.files,
-          file_url = `${location.href}music/${encodeURI(files[0]['name'])}`,
-          clean_name = files[0]['name'].replace(/\.([0-9A-Za-z]{3})$/, ''),
+          name_regex = files[0]['name'].replace(/\#/g, '');           // Hashtags were causing errors
+          file_url = `${location.href}music/${encodeURI(name_regex)}`,
+          clean_name = name_regex.replace(/\.([0-9A-Za-z]{3})$/, ''),
           url_blob = URL.createObjectURL(files[0]);
       // Grabs audio file and creates a blob
+      // TODO: CREATE SPINNER FOR LOADING ITEMS
       save_file(files[0], file_url, clean_name);
       audio.src = url_blob;
       audio.load(); // Loads audio file
@@ -145,10 +147,9 @@ window.onload = () => {
         }, 125)
         mouse_down = false;
       })
-      range_node.addEventListener('mousemove', (e)=>{ // Once the mouse moves
-        if(mouse_down){
-          update_progress_node(e);
-        }
+      window.addEventListener('mousemove', (e)=>{ // Once the mouse moves on the window
+        if(!mouse_down) return  // mousedown defined when the user clicks down on the seeker. Did this so you dont have to be on the slider to move it;                       
+        update_progress_node(e);
       })
       
       audio.volume = volume_slider.value / 100 // Resetting volume to the sliders value (slider rendered on DOM)
@@ -269,6 +270,8 @@ function save_file(file, url, name){
             }
           })
         }
+  console.log(url)
+  console.log(name)
   file_exist_test(url);
   if(file_already_saved) return read_file(url, name);             // Exiting function if the file exists
   let formData = new FormData(), api_url = `${location.href}api`; // Connecting to API
@@ -282,7 +285,9 @@ function save_file(file, url, name){
           clearInterval(update_test)        // Stopping loop
           read_file(url, name)              // Reading file
         }
-      }, 500)
+      }, 1000)
+    }else{
+      // Do code stuff
     }
   })
 }
@@ -320,16 +325,15 @@ function read_file(file_url, clean_name){
         genre_node = document.querySelector('.player_genre'),
         artist_node = document.querySelector('.player_artist'),
         album_cover = document.querySelector('.cover'),
+        audio = document.getElementById("audio"),
         jsmediatags = window.jsmediatags;
   jsmediatags.read(file_url, {
     onSuccess:(tags)=>{
-      const audio = document.getElementById("audio");
-      audio.play(); // Playing audio once the data has loaded
       console.log('%c[jsmediatags]'+`%c Tag data`, 'color: #fb0032;font-weight: bold;', 'color: #fff;')
       console.log(tags)
       let   tag = tags.tags,
-            artist = tag.artist,
-            genre = tag.genre,
+            artist = tag.artist != '' ? tag.artist : '',
+            genre = tag.genre  != '' ? tag.genre : '',
             // If there's no title tag use the name from the file or if the name doesnt match the one given by the file use the file one
             title = tag.title != undefined ? tag.title : clean_name,
             picture = tag.picture,
@@ -339,6 +343,10 @@ function read_file(file_url, clean_name){
       fade(title_node, 'text', title, 150);
       fade(artist_node, 'text', artist, 175);
       fade(genre_node, 'text', genre, 200);
+
+      title_node.parentNode.removeAttribute('href');
+      artist_node.parentNode.removeAttribute('href');
+
 
       if(/soundclown/ig.test(genre) || /shitpost/ig.test(genre)){
         document.querySelector('.background_img_container').classList.add('shitpost')
@@ -371,12 +379,14 @@ function read_file(file_url, clean_name){
         album_cover.style.opacity = '1'
       },125)
       document.querySelector('.background_image').src = img; // Modifying the image 
-      
+      audio.play(); // Playing audio once the data has loaded
     },
     onError:(err)=>{
       title_node.textContent = clean_name
-      artist_node.textContent = err.info
-      console.log(err) // If the jsmediatags fails
+      album_cover.src = img;                                  // Modifying the image 
+      document.querySelector('.background_image').src = img;  // Modifying the image 
+      audio.play(); // Playing audio
+      console.log(err)
     }
   })
 }
