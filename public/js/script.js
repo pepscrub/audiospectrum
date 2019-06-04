@@ -377,7 +377,7 @@ async function spotify(){
   if(!required_info) return;                                // Returning if there's no login information to retrive
   let user_info = required_info[0]['user_info']             // Defining userinfo for product information
       current = required_info[1]['player_curr'];            // Grabbing current info for error debugging
-  if(!required_info[1]['state']) return;                    // Exit function if the user stops spotify all together
+  if(required_info[1]['state'] !== undefined) return;       // Exit function if the user stops spotify all together
   spotify_data(await spotify_connected(true))               // Sending data to our DOM maniuplator
   // Setting up entry point for retriving data
   // Setting a loop to a timer to retrive data from the spotify API
@@ -463,17 +463,17 @@ async function spotify(){
 
 
 function spotify_data(data){
-  const player_curr_items = data[0]['player_curr']['item'],
-        song_link = player_curr_items['external_urls']['spotify'],
-        player_duration = player_curr_items['duration_ms']
-        player_curr_img = player_curr_items['album']['images'][0] == undefined ? 'imgs/default.png' : player_curr_items['album']['images'][0]['url'], // 640px image
-        player_curr_artist = player_curr_items['artists'],
-        player_name = player_curr_items['name'];
-  let artists = '',
-      player_curr_time = data[0]['player_curr']['progress_ms'],
-      count = 1,
-      current_time = `${(`${Math.round((player_curr_time / 60500) * 100) / 100}`).replace('.', ':')}`,
-      duration_time = `${(`${Math.round((player_duration / 60500) * 100) / 100}`).replace('.', ':')}`;
+  const player_curr_items = data[0]['player_curr']['item'],                                                                                           // Quality of life variable
+        song_link = player_curr_items['external_urls']['spotify'],                                                                                    // Song link
+        player_duration = player_curr_items['duration_ms']                                                                                            // Song duration
+        player_curr_img = player_curr_items['album']['images'][0] == undefined ? 'imgs/default.png' : player_curr_items['album']['images'][0]['url'], // 640px image of album art
+        player_curr_artist = player_curr_items['artists'],                                                                                            // Current artist (returns array)
+        player_name = player_curr_items['name'];                                                                                                      // Song name
+  let artists = '',                                                                                       // Defining an empty string to append artists to
+      player_curr_time = data[0]['player_curr']['progress_ms'],                                           // Grabbing the current time value
+      count = 1,                                                                                          // Count variable used in loop of array
+      current_time = `${(`${Math.round((player_curr_time / 60000) * 100) / 100}`).replace('.', ':')}`,    // Ca
+      duration_time = `${(`${Math.round((player_duration / 60000) * 100) / 100}`).replace('.', ':')}`;
   player_curr_artist.forEach((artist)=>{
     let url = artist.external_urls.spotify,
         name = artist.name,
@@ -489,7 +489,7 @@ function spotify_data(data){
   // Modifying DOM
 
   current_time = `${(`${Math.round(((player_curr_time) / 60500) * 100) / 100}`).replace('.', ':')}`;
-  duration_time = duration_time.length == 4 ? duration_ntime : duration_time + '0';
+  duration_time = duration_time.length == 4 ? duration_time : duration_time + '0';
   current_time = current_time.length == 4 ? current_time : current_time + '0';
   duration_node.textContent = `${current_time} / ${duration_time}`
   genre_node.textContent = ''
