@@ -6,6 +6,9 @@ const file = document.getElementById("thefile"),
       pause_node = document.querySelector('.player_pause'),
       volume_icon = document.querySelector('.icon'),
       album_cover = document.querySelector('.cover'),
+      title_node = document.querySelector('.player_title'),
+      genre_node = document.querySelector('.player_genre'),
+      artist_node = document.querySelector('.player_artist'),
       volume_slider = document.querySelector('.slider');
 let connect = false,    // If the canvas is already connected
     muted = false,      // If the user toggles mute
@@ -36,7 +39,7 @@ window.addEventListener('dragleave', (e)=>{
 })
 
 window.onload = () => {
-    debugger_tester();
+    spotify();
     loader_node.style.opacity = '0'; // Fading out loader
     setTimeout(()=>{loader_node.remove()},125)
     // Play/Pause button
@@ -284,6 +287,7 @@ function save_file(file, url, name){
   fetch(api_url,{method: 'POST',body: formData})
   .then(res=>{
     if(res.status === 200){                 // Executing if the POST was sent
+      console.log(res.json())
       let update_test = setInterval(()=>{   // Creating a loop to check every 500ms (should take less than this to update)
         file_exist_test(url);               // Calling check function
         if(file_already_saved){             // Checking to see if the variable changes to tru
@@ -321,16 +325,66 @@ function fade(node, type, data, amount){
   }
 }
 
-function debugger_tester(){
-
+function spotify_connected(){
+  const search_parameters = new URLSearchParams(window.location.search),          // Creating object based of URL search parameters
+        access_token = search_parameters.get('access_token'),                     // Grabbing access from URL
+        refresh_token = search_parameters.get('refresh_token');                   // Grabbing refresh from URL
+  if(access_token !== null || refresh_token !== null){
+    localStorage.setItem('spotify_atoken', access_token);                         // Storing in local storage to access when user refreshes
+    localStorage.setItem('spotify_rtoken', refresh_token);
+  }
+  // If theres no data to even retrive and the user has not interacted with the login uri
+  if(access_token === null && refresh_token == null && localStorage.getItem('spotify_atoken') === null && localStorage.getItem('spotify_rtoken') === null) return false
+  window.history.pushState(null, null, `${location.origin}${location.pathname}`)  // Resetting URL to make it look cleaner (this doesn't refresh the page)
+  return spotify_player();
 }
 
+async function spotify_player(){
+  const access_token = localStorage.getItem('spotify_atoken');
+  let player_data = []
+  await fetch('https://api.spotify.com/v1/me/player/currently-playing', {headers:{'Authorization': 'Bearer '+access_token}})
+  .then((res)=>{
+    if(res.status === 200) return res.json();             // Returning the queried data
+    if(res.status === 204) return {'state': 'inactive'}   // If spotify isn't opened and there's no track to get data from
+  })
+  .then((res)=>{
+    player_data.push({'player_curr': res})                // Place data into an array
+  })
+  await fetch('https://api.spotify.com/v1/me/player', {headers:{'Authorization': 'Bearer '+access_token}})
+  .then((res)=>{
+    if(res.status === 200) return res.json();             // Returning the queried data
+  })
+  .then((res)=>{
+    player_data.push({'player_info': res})                // Place the data into the array as well
+  })
+  return player_data;                                     // return this data
+}
+
+async function spotify(){
+  const access_token = localStorage.getItem('spotify_atoken');
+  let required_info = await spotify_connected();  // Grabbing current player information
+  if(!required_info) return;                      // Returning if there's no login information to retrive
+  let current = required_info[1]['player_curr'],
+      player_info = required_info[2]['player_info'];
+  console.log(required_info)
+  file.remove();                                  // Removing input file to stop file uploads *TEMP
+  // Play/Pause functionality only works on premium ????????????????????????
+  // spotify will send 403 errors if the account is not premium
+  pause_node.addEventListener('click', (event)=>{
+    if(pause){
+      fetch(`https://api.spotify.com/v1/me/player/play`, {method: 'PUT',headers:{'Authorization': 'Bearer '+access_token}})
+      pause = false;
+      pause_node.innerHTML = `<i class="fas fa-play"></i>`
+    }else{
+      fetch(`https://api.spotify.com/v1/me/player/pause`, {method: 'PUT',headers:{'Authorization': 'Bearer '+access_token}})
+      pause = true;
+      pause_node.innerHTML = `<i class="fas fa-pause"></i>`
+    }
+  })
+}
+
+
 function read_file(file_url, clean_name){
-  const title_node = document.querySelector('.player_title'),
-        genre_node = document.querySelector('.player_genre'),
-        artist_node = document.querySelector('.player_artist'),
-        album_cover = document.querySelector('.cover'),
-        audio = document.getElementById("audio"),
         jsmediatags = window.jsmediatags;
   let img = 'imgs/default.png' // Defining the default image (Incase no image from the audio file is present)
   jsmediatags.read(file_url, {
