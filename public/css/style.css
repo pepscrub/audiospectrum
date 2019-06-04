@@ -13,18 +13,24 @@
 html{
   overflow-y: hidden;
 }
-
+a:hover{
+  /* Resetting Bulma hover */
+  color: white;
+}
 :root{
   --accent-color: #fb0032;
+  --background-color-main: #0a0c0e;
+  --background-color-secondary: #0d0e106e;
+  --background-player: #11141a;
+  --background-input-range: #2b333b;
+  --background-input-highlighht: #475461;
 }
 
 body{
-  background-color: #0a0c0e;
+  background-color: var(--background-color-main);
 }
 a{
   color: inherit;
-}
-a{
   cursor: context-menu;
 }
 
@@ -45,10 +51,9 @@ a{
   width: 100%;
   height: 100%;
   z-index: 1;
-  /* background-color: #0a0c0e; */
 }
   
-audio {
+audio{
   z-index: 102;
   outline: none;
   position: fixed;
@@ -79,7 +84,7 @@ audio {
   color: #fff;
 }
 .drop_content > .background{
-  background-color: #0d0e106e;
+  background-color: var(--background-color-secondary);
   width: 100%;
   height: 100%;
 }
@@ -92,7 +97,7 @@ audio {
 }
 
 #player{
-  background-color: #11141a;
+  background-color: var(--background-player);
   color: white;
   width: 100%;
   height: 10em;
@@ -201,7 +206,7 @@ input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
   height: 6px;
   cursor: pointer;
-  background: #2b333b;
+  background: var(--background-input-range);
   border-radius: 25px;
 }
 
@@ -215,13 +220,13 @@ input[type=range]::-webkit-slider-thumb {
   margin-top: -5px;
 }
 input[type=range]:focus::-webkit-slider-runnable-track {
-  background: #475461;
+  background: var(--background-input-highlighht);
 }
 input[type=range]::-moz-range-track {
   width: 100%;
   height: 6px;
   cursor: pointer;
-  background: #2b333b;
+  background: var(--background-input-range);
   border-radius: 25px;
 }
 input[type=range]::-moz-range-thumb {
@@ -246,7 +251,7 @@ input[type=range]::-ms-fill-lower {
 }
 input[type=range]::-ms-fill-upper {
   transition: background-color 125ms ease;
-  background-color: #2b333b;
+  background-color: var(--background-input-range);
   border-radius: 50px;
 }
 input[type=range]::-ms-thumb {
@@ -258,10 +263,10 @@ input[type=range]::-ms-thumb {
   height: 6px;
 }
 input[type=range]:focus::-ms-fill-lower {
-  background-color: #2b333b;
+  background-color: var(--background-input-range);
 }
 input[type=range]:focus::-ms-fill-upper {
-  background-color: #475461;
+  background-color: var(--background-input-highlighht);
 }
 input[type=range]:hover::-ms-thumb {
   height: 16px;
@@ -330,6 +335,7 @@ input[type=range]:hover::-ms-thumb {
   filter: saturate(100) contrast(23) blur(10px) brightness(25) brightness(.2);
 }
 
+/* Song duration */
 .duration{
   user-select: none;
   position: fixed;
@@ -339,6 +345,7 @@ input[type=range]:hover::-ms-thumb {
   z-index: 9999;
 }
  
+/* LOADER */
 
 .lds-facebook {
   display: inline-block;
