@@ -35,17 +35,8 @@ node index.js
 ## How it works
 
 ### File upload flow chart
+![file upload flow chart](https://i.imgur.com/DhNg5uL.png)
 
-```mermaid
-graph TD;
-    a[User]-->b[Upload File];
-    b[Uploads File]--POST request to server-->c[Music file already saved?]
-    c--if file exists exit this function-->f[Doesn't exist]
-    f-->h[Save music file]
-    b--GET file from server. if fail repeat every 500ms until success-->d[Read meta data]
-    h-->d
-    d-->e[Modify DOM]
-```
 ---
 ### Spotify API
 Some notes on the API.
@@ -56,45 +47,9 @@ Some notes on the API.
 > **To access Spotify's API you require a client secret and the user to login** 
 
 #### WEB SERVER (some client) Authenticating a user
-
-```mermaid
-graph TD;
-	a[User clicks Login]--Redirect to /login-->b[Generate a 16 long string and set as cookie]
-	b--User logins in successfully into spotify-->c[Spotify redirects to our apps callback]
-	c--GET request sent to /callback with data in headers-->d[Check to see if the users cookie state and the GET state are the same]
-	d--Missmatch-->e[Throw an error]
-	d--States are the same-->f[Clear cookies related to state]
-	f--POST request to spotify/api/token-->g[Request access token]
-	g--An error occured-->e
-	g--encode URL search with relevant data-->h[Redirect back to homepage]
-	h--Client sided script interrupts search paramaters-->i[Save access and refresh token to localStorage]
-	i-->j[Remove search parameters using history pushState]
-```
+![Spotify oAuth flow chart](https://i.imgur.com/d1ZGDG1.png)
+---
 #### CLIENT SIDE Accessing the player
 > All requests are sent with the authorization code grabbed via oAuth. All Spotify API queries require an authorization code to respond correctly.
-```mermaid
-graph TD;
-	a[Page is loaded]
-	b[Master Spotify Function]
-	c[Grab URL search parmaters and store them]
-	d[Return data]
-	e[Create array to store fetch data]
-	f[GET user info]
-	g[GET current player information]
-	h[append to array]
-	i[Parse data]
-	j[Maniuplate DOM and print data]
-	a-->b
-	b--Ask for all data via parameter-->c
-	c--User hasn't logged in return FALSE-->d
-	d-->b
-	c-->e
-	e-->g
-	e--Data parameter is false-->f
-	f-->h
-	g-->h
-	h-->d
-	b--Await data info-->i
-	b--After intial successful fetch GET player every 3 seconds-->c
-	i-->j
-```
+
+![Spotify querying flow chart](https://i.imgur.com/Mv522eD.png)
