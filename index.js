@@ -145,6 +145,9 @@ app.post('/api', (req, res)=>{  // Create entry point for /api for POSTS
 save_file = (file_data) =>{
     const   file_temp = file_data['path'],                                         // Grabbing the temp location of the file sent to our server
             file_name = file_data['originalFilename'].replace(/\#/g, '');          // Grabbing the original file name that was uploaded
+    if(!fs.existsSync('public/music')){                                            // Creating music folder if it doesn't exist
+        fs.mkdirSync('public/music')
+    }
     try{
         // Creating function to which access later
         const write_file = (data) =>{                                               // Data retrived via readfile

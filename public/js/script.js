@@ -592,7 +592,11 @@ function read_file(file_url, clean_name){
         album_cover.style.opacity = '1'
       },125)
       document.querySelector('.background_image').src = img; // Modifying the image 
-      audio.play(); // Playing audio once the data has loaded
+      try{
+        audio.play(); // Playing audio once the data has loaded
+      }catch(e){
+        console.log(e)
+      }
     },
     onError:(err)=>{
       title_node.textContent = clean_name
