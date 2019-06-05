@@ -4,7 +4,7 @@ const file = document.getElementById("thefile"),
       audio = document.getElementById("audio"),
       range_node = document.querySelector('.player_current'),
       pause_node = document.querySelector('.player_pause'),
-      volume_icon = document.querySelector('.icon'),
+      volume_icon = document.querySelector('.volume_icon'),
       album_cover = document.querySelector('.cover'),
       title_node = document.querySelector('.player_title'),
       genre_node = document.querySelector('.player_genre'),
@@ -40,41 +40,61 @@ window.addEventListener('dragleave', (e)=>{
 })
 
 window.onload = () => {
-    spotify();
-    loader_node.style.opacity = '0'; // Fading out loader
-    setTimeout(()=>{loader_node.remove()},125)
-    // Play/Pause button
-    pause_node.innerHTML = `<i class="fas fa-pause"></i>`
-    pause_node.addEventListener('click', (e)=>{
-      if(pause){
-        pause = false;
-        audio.pause();
-        pause_node.innerHTML = `<i class="fas fa-play"></i>`
-      }else{
-        audio.play();
-        pause = true;
-        pause_node.innerHTML = `<i class="fas fa-pause"></i>`
-      }
-    })
-    // When the user clicks on the speaker icon toggle between MUTE and UNMUTED
-
-    volume_icon.addEventListener('click',()=>{
-      if(!muted){ // Not muted
-        muted = true; 
-        audio.volume = 0;
-        volume_icon.innerHTML = '<i class="fas fa-volume-mute"></i>'
-      }else{
-        muted = false;
-        // Grabbing volume from localstorage if the item exists (basically the same as the slider)
-        audio.volume = localStorage.getItem('volume') != undefined ? localStorage.getItem('volume') : 1
-        volume_icon.innerHTML = '<i class="fas fa-volume-up"></i>'
-      }
-    })
-    document.querySelector('.slider').value = localStorage.getItem('volume') != undefined ? localStorage.getItem('volume') * 100 : .5 // Volume resetting
-    file.onchange = function(){
-      file_change(this.files);
+  spotify();
+  loader_node.style.opacity = '0'; // Fading out loader
+  setTimeout(()=>{loader_node.remove()},125)
+  // Play/Pause button
+  pause_node.innerHTML = `<i class="fas fa-pause"></i>`
+  pause_node.addEventListener('click', (e)=>{
+    if(pause){
+      pause = false;
+      audio.pause();
+      pause_node.innerHTML = `<i class="fas fa-play"></i>`
+    }else{
+      audio.play();
+      pause = true;
+      pause_node.innerHTML = `<i class="fas fa-pause"></i>`
     }
-  };
+  })
+  // When the user clicks on the speaker icon toggle between MUTE and UNMUTED
+
+  volume_icon.addEventListener('click',()=>{
+    if(!muted){ // Not muted
+      muted = true; 
+      audio.volume = 0;
+      volume_icon.innerHTML = '<i class="fas fa-volume-mute"></i>'
+    }else{
+      muted = false;
+      // Grabbing volume from localstorage if the item exists (basically the same as the slider)
+      audio.volume = localStorage.getItem('volume') != undefined ? localStorage.getItem('volume') : 1
+      volume_icon.innerHTML = '<i class="fas fa-volume-up"></i>'
+    }
+  })
+  document.querySelector('.slider').value = localStorage.getItem('volume') != undefined ? localStorage.getItem('volume') * 100 : .5 // Volume resetting
+  file.onchange = function(){
+    file_change(this.files);
+  }
+
+  const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+
+  // Check if there are any navbar burgers
+  if ($navbarBurgers.length > 0) {
+
+  // Add a click event on each of them
+  $navbarBurgers.forEach( el => {
+    el.addEventListener('click', () => {
+      // Get the target from the "data-target" attribute
+      const target = el.dataset.target;
+      const $target = document.getElementById(target);
+
+      // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+      el.classList.toggle('is-active');
+      $target.classList.toggle('is-active');
+
+      });
+    });
+  }
+};
 
 function file_change(file_update){
   if(file_update === undefined) return;
@@ -349,6 +369,7 @@ async function spotify_player(userinforequired){
       if(res.status === 200) return res.json();             // Returning the queried data
     })
     .then((res)=>{
+      if(res === undefined) return window.location.href = window.location.href+'login'
       player_data.push({'user_info': res['product']})      // Pushing data relating to the users premium or not
     })
   }
@@ -372,32 +393,43 @@ async function spotify_current(){
 }
 async function spotify(){
   const access_token = localStorage.getItem('spotify_atoken'),
+        login_node = document.querySelector('.control'),
         options = {method: 'PUT',headers:{'Authorization': 'Bearer '+access_token}};
   let required_info = await spotify_connected(false);       // Grabbing current player information
   if(!required_info) return;                                // Returning if there's no login information to retrive
   let user_info = required_info[0]['user_info']             // Defining userinfo for product information
       current = required_info[1]['player_curr'];            // Grabbing current info for error debugging
-  if(required_info[1]['state'] !== undefined) return;       // Exit function if the user stops spotify all together
   spotify_data(await spotify_connected(true))               // Sending data to our DOM maniuplator
+
+  // Replacing login button with logout button
+  login_node.childNodes[1].removeAttribute('href');
+  login_node.childNodes[1].childNodes[1].childNodes[1].setAttribute('class', 'fas fa-sign-out-alt');
+  login_node.childNodes[1].childNodes[3].textContent = 'Logout';
+  login_node.addEventListener('click', (e)=>{
+    localStorage.removeItem('spotify_atoken')
+    localStorage.removeItem('spotify_rtoken')
+    location.href = location.href;
+  })
+
+
   // Setting up entry point for retriving data
   // Setting a loop to a timer to retrive data from the spotify API
   setInterval(async ()=>{
     const required_info = await spotify_connected(true);    // Grabbing current player information
     spotify_data(required_info)
   }, 3000)
-  file.remove();                                            // Removing input file to stop file uploads *TEMP
-
+  file.style.display = 'none' // Removing file upload functionality while spotify plays
   // Removing items based of the users level (cannot use pause/play functionality if the user is not a premium user)
   if(user_info !== 'premium'){
     let volume_node = document.querySelector('.volume')
     volume_node.style.opacity = 0
     pause_node.style.opacity = 0;
     setTimeout(()=>{
-      pause_node.remove();
-      volume_node.remove();
+      pause_node.style.display = 'none';
+      volume_node.style.display = 'none';
     }, 125);
   }
-
+  // Need a premium account to implement more features
   const change_volume = (percent) =>{
     fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${percent}`, options)
   },
@@ -461,42 +493,46 @@ async function spotify(){
   })
 }
 
+function clean_seconds(value){
+  let return_value = value < 10 ? '0'+value : value;
+  return return_value;
+}
 
 function spotify_data(data){
+  if(data[0]['player_curr']['currently_playing_type'] === 'ad') return title_node.innerHTML = 'Ad';
+  if(data[0]['player_curr']['state'] !== undefined) return;                                                                                           // Exiting if there's no player data
   const player_curr_items = data[0]['player_curr']['item'],                                                                                           // Quality of life variable
         song_link = player_curr_items['external_urls']['spotify'],                                                                                    // Song link
-        player_duration = player_curr_items['duration_ms']                                                                                            // Song duration
+        player_duration = new Date(player_curr_items['duration_ms'])                                                                                  // Song duration
         player_curr_img = player_curr_items['album']['images'][0] == undefined ? 'imgs/default.png' : player_curr_items['album']['images'][0]['url'], // 640px image of album art
         player_curr_artist = player_curr_items['artists'],                                                                                            // Current artist (returns array)
         player_name = player_curr_items['name'];                                                                                                      // Song name
   let artists = '',                                                                                       // Defining an empty string to append artists to
-      player_curr_time = data[0]['player_curr']['progress_ms'],                                           // Grabbing the current time value
+      player_curr_time = new Date(data[0]['player_curr']['progress_ms']),                                 // Grabbing the current time value * Time is displayed via UNIX timestamp
       count = 1,                                                                                          // Count variable used in loop of array
-      current_time = `${(`${Math.round((player_curr_time / 60000) * 100) / 100}`).replace('.', ':')}`,    // Ca
-      duration_time = `${(`${Math.round((player_duration / 60000) * 100) / 100}`).replace('.', ':')}`;
-  player_curr_artist.forEach((artist)=>{
-    let url = artist.external_urls.spotify,
-        name = artist.name,
-        node = `<a href="${url}">${name}</a>`
-    if(player_curr_artist.length == count){
+      current_time = `${player_curr_time.getMinutes()}:${clean_seconds(player_curr_time.getSeconds())}`,  // Placing into string to append to node
+      duration_time = `${player_duration.getMinutes()}:${clean_seconds(player_duration.getSeconds())}`;   // ditto
+  
+  player_curr_artist.forEach((artist)=>{        // Looping through all contributing artists
+    let url = artist.external_urls.spotify,     // URL to artists spotify account
+        name = artist.name,                     // Name of the artist
+        node = `<a href="${url}">${name}</a>`   // Creating node
+    if(player_curr_artist.length == count){     // If the artists is the last in the list dont apply a comma
       artists += ' '+node
     }else{
       artists += `${node},`
     }
-    count+=1;
+    count+=1;                                   // Increase loop iteration
   })
 
   // Modifying DOM
 
-  current_time = `${(`${Math.round(((player_curr_time) / 60500) * 100) / 100}`).replace('.', ':')}`;
-  duration_time = duration_time.length == 4 ? duration_time : duration_time + '0';
-  current_time = current_time.length == 4 ? current_time : current_time + '0';
-  duration_node.textContent = `${current_time} / ${duration_time}`
-  genre_node.textContent = ''
-  title_node.innerHTML = `<a href="${song_link}">${player_name}</a>`;
-  artist_node.innerHTML = artists;
-  range_node.classList.remove('progress_not_seeking');
-  range_node.classList.add('progress_spotify')
+  duration_node.textContent = `${current_time} / ${duration_time}`    // Displaying the time elapsed in the song
+  genre_node.textContent = ''                                         // Setting this to nothing since it's not really required
+  title_node.innerHTML = `<a href="${song_link}">${player_name}</a>`; // Adding a link to the song
+  artist_node.innerHTML = artists;                                    // Adding the artist node to the document
+  range_node.classList.remove('progress_not_seeking');                // Remove default progress not seeking (seek animation default 1s)
+  range_node.classList.add('progress_spotify')                        // Add custom seeking (animation 2s)
   range_node.value = player_curr_time;
   range_node.max = player_duration;
   album_cover.src = player_curr_img

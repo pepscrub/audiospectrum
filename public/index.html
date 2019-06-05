@@ -14,6 +14,52 @@
         </article>
         <!-- Main application -->
         <main id="content">
+            <nav class="navbar is-black">
+                <div class="navbar-brand">
+                    <div class="navbar-burger burger" data-target="mobile_dropdown">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    </div>
+                </div>
+
+                <div id="mobile_dropdown" class="navbar-menu">
+                    <div class="navbar-start">
+                        <a class="navbar-item" href="https://github.com/pepscrub/audiospectrum">Github</a>
+                        <div class="navbar-item has-dropdown is-hoverable">
+                            <a class="navbar-link" href="https://developer.spotify.com/">
+                                Spotify Developers
+                            </a>
+                            <div class="navbar-dropdown is-boxed">
+                                <a class="navbar-item" href="https://developer.spotify.com/dashboard/applications">
+                                    Dashboard
+                                </a>
+                                <a class="navbar-item" href="https://developer.spotify.com/documentation/web-api/">
+                                    Web API
+                                </a>
+                                <a class="navbar-item" href="https://developer.spotify.com/documentation/web-api/reference/player/">
+                                    Player endpoints and usage
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="navbar-end">
+                    <div class="navbar-item">
+                        <div class="field is-grouped">
+                            <p class="control">
+                                <a class="button is-black" href="/login">
+                                <span class="icon">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                </span>
+                                <span>Login</span>
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </nav>
             <!-- File drop in -->
             <input type="file" id="thefile" accept="audio/*">
             <!-- Visualizer -->
@@ -35,7 +81,7 @@
                 </div>
                 <!-- Volume slider -->
                 <div class="volume">
-                    <a class="icon"><i class="fas fa-volume-up"></i></a>
+                    <a class="volume_icon"><i class="fas fa-volume-up"></i></a>
                     <input type="range" value="50" max="100" min="0" class="volume slider">
                 </div>
                 <!-- Play pause button -->

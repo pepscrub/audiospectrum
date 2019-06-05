@@ -33,7 +33,18 @@ a{
   color: inherit;
   cursor: context-menu;
 }
+#content > nav{
+  position: fixed;
+  width: 100%;
+  z-index: 99999;
+}
+.navbar-custom{
+  display: contents;
+}
 
+.navbar-item{
+  transition: background-color 125ms ease;
+}
 #thefile {
   position: fixed;
   opacity: 0;
